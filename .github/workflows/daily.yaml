@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
       - name: Fetch, translate and generate post
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
@@ -43,5 +48,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Build Jekyll
+        run: |
+          bundle install
+          bundle exec jekyll build
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/

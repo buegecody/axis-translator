@@ -49,4 +49,8 @@ original_url: "{url}"
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write(front_matter)
-    print(f"Written: {filename}")
+    print(f"Written: {filename}", file=sys.stderr)
+
+    # Forward JSON for the next pipe stage
+    print("---JSON_OUTPUT---")
+    print(json_str)

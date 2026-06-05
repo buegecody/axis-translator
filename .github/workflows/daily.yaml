@@ -16,13 +16,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Fetch and translate
+      - name: Fetch, translate and generate post
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-        run: python3 scripts/fetch_and_translate.py
-
-      - name: Generate post
-        run: python3 scripts/generate_post.py
+        run: |
+          python3 scripts/fetch_and_translate.py | python3 scripts/generate_post.py
 
       - name: Commit and push
         run: |

@@ -7,28 +7,25 @@ layout: default
   .post-list h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
   .post-list h2 a { color: #1a1a2e; text-decoration: none; }
   .post-list h2 a:hover { color: #e94560; }
+  .post-list .meta { font-size: 0.85rem; color: #888; margin: 0.3rem 0; }
   .post-list .excerpt { color: #666; font-size: 0.95rem; margin-top: 0.5rem; }
   .latest-badge { background: #e94560; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; margin-left: 0.5rem; vertical-align: middle; }
 </style>
 
-{% for post in site.posts %}
-  {% if forloop.first %}
+{% if site.posts %}
   <h1 style="margin-bottom:1.5rem;">最新譯文</h1>
   <ul class="post-list">
-  {% endif %}
+  {% for post in site.posts %}
     <li>
       <h2>
         <a href="{{ post.url }}">{{ post.title }}</a>
         {% if forloop.first %}<span class="latest-badge">NEW</span>{% endif %}
       </h2>
-      <div class="meta">
-        <span>📅 {{ post.date | date: "%Y/%m/%d" }}</span>
-        <span>🏷️ {{ post.category }}</span>
-      </div>
+      <div class="meta">📅 {{ post.date | date: "%Y/%m/%d" }} &nbsp; 🏷️ {{ post.category }}</div>
       <p class="excerpt">{{ post.content | strip_html | truncate: 120 }}</p>
     </li>
   {% endfor %}
   </ul>
 {% else %}
   <p style="text-align:center; color:#888; padding:3rem;">尚未有任何譯文。</p>
-{% endfor %}
+{% endif %}

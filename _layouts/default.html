@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif; line-height: 1.8; color: #333; background: #fafafa; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem; text-align: center; }
+    header a { color: #fff; text-decoration: none; font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; }
+    nav { background: #16213e; padding: 0.5rem 1rem; }
+    nav a { color: #a0a0a0; text-decoration: none; margin-right: 1.5rem; font-size: 0.9rem; }
+    nav a:hover { color: #fff; }
+    main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    article { background: #fff; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; color: #1a1a2e; line-height: 1.4; }
+    .meta { color: #888; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .meta span { margin-right: 1rem; }
+    .original-link { display: inline-block; background: #eee; color: #555; padding: 0.3rem 0.8rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .original-link:hover { background: #ddd; }
+    .content { font-size: 1.05rem; }
+    .content p { margin-bottom: 1.2rem; text-align: justify; }
+    footer { text-align: center; color: #aaa; font-size: 0.8rem; padding: 2rem; }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.3rem; }
+      article { padding: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <header><a href="/">{{ site.title }}</a></header>
+  <nav><a href="/">首頁</a><a href="/posts/">全部譯文</a></nav>
+  <main>{{ content }}</main>
+  <footer>Axis Translator · 每日自動翻譯</footer>
+</body>
+</html>

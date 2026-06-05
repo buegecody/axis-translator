@@ -1,0 +1,55 @@
+name: Daily Translation
+
+on:
+  schedule:
+    - cron: '30 9 * * *'   # 每天 17:30 UTC = 01:30 CST
+  workflow_dispatch:
+
+jobs:
+  translate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch & Translate
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          python3 scripts/fetch_and_translate.py 2>&1 | tee /tmp/fetch_output.txt
+          # Extract JSON
+          python3 -c "
+          import sys
+          data = open('/tmp/fetch_output.txt').read()
+          idx = data.find('---JSON_OUTPUT---')
+          if idx != -1:
+              print(data[idx:])" > /tmp/article.json
+
+      - name: Generate Jekyll Post
+        run: |
+          python3 scripts/generate_post.py < /tmp/fetch_output.txt
+
+      - name: Commit Post
+        run: |
+          git config user.name "Axis Translator Bot"
+          git config user.email "bot@axis-translator"
+          git add _posts/
+          if git diff --staged --quiet; then
+            echo "No new post to commit"
+          else
+            git commit -m "Translate: $(date +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Send Email Notification
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python3 scripts/send_email.py < /tmp/fetch_output.txt

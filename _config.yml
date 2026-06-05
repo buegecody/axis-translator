@@ -1,0 +1,28 @@
+title: Axis Translator
+description: Axis 雜誌日文翻譯繁中版
+theme: minima
+baseurl: ""
+url: "https://buegecody.github.io/axis-translator"
+github_username: buegecody
+repository: buegecody/axis-translator
+timezone: Asia/Taipei
+
+header_pages:
+
+collections:
+  posts:
+    title: 譯文
+    output: true
+    permalink: /posts/:year/:month/:day/:title/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+permalink: /:year/:month/:day/:title/
+paginate: 10
+paginate_path: /page/:num/
+
+future: true
+show_excerpts: false

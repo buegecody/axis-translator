@@ -29,6 +29,7 @@ jobs:
       - name: Fetch, translate and save to DB
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        timeout-minutes: 15
         run: |
           cd scripts && python main.py process
           python generate_posts.py

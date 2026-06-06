@@ -8,42 +8,95 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 9 * * *'   # 每天 17:30 UTC = 01:30 CST
+    # process: 08:00 CST (00:00 UTC) — 爬蟲 + 翻譯
+    # send:   17:00 CST (09:00 UTC) — 寄送 Email
+    - cron: '0 0 * * *'
+    - cron: '0 9 * * *'
 
 jobs:
-  build:
+  process:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      - name: Fetch, translate and save to DB
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          cd scripts && python main.py process
+          python generate_posts.py
+
+      - name: Upload DB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: articles-db
+          path: articles.db
+          retention-days: 1
+
+      - name: Commit code + posts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/ _posts/
+          git diff --staged --quiet || git commit -m "daily: $(date +%Y-%m-%d)"
+          git push
+
+  send:
+    runs-on: ubuntu-latest
+    needs: process
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download DB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: articles-db
+          path: .
+          if-no-artifact-found: continue
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Send email
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: |
+          cd scripts && python main.py send
+
+      - name: Commit DB sent flag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add articles.db
+          git diff --staged --quiet || git commit -m "daily: $(date +%Y-%m-%d) sent"
+          git push
+
+  build-pages:
+    runs-on: ubuntu-latest
+    needs: process
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-
-      - name: Fetch, translate and generate post
-        env:
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-        run: |
-          python3 scripts/fetch_and_translate.py | python3 scripts/generate_post.py
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add _posts/
-          git diff --staged --quiet || git commit -m "daily: $(date +%Y-%m-%d)"
-          git push
-
-      - name: Send email
-        env:
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        run: python3 scripts/send_email.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

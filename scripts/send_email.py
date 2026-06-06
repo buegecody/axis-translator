@@ -14,23 +14,39 @@ GMAIL_APP_PASSWORD = "uebwoabvuyahabsr"
 TO_EMAIL = "buege1216@gmail.com"
 
 def send_email(title: str, original_url: str, translated: str, date: str):
-    # Clean HTML
-    text = re.sub(r"<[^>]+>", "", translated)
-    text = re.sub(r"\s+", " ", text).strip()
+    # Preserve paragraph structure - split on double newlines, strip each
+    paragraphs = [p.strip() for p in translated.split("\n\n") if p.strip()]
+    # Clean HTML tags within each paragraph
+    cleaned = []
+    for p in paragraphs:
+        p = re.sub(r"<[^>]+>", "", p)
+        p = re.sub(r"[ \t]+", " ", p)
+        if p:
+            cleaned.append(p)
 
-    body = f"""Axis Translator 每日譯文
+    sep = "-" * 40
+    body_lines = [
+        f"Axis Translator 每日譯文",
+        f"",
+        f"📅 {date}",
+        f"📄 {title}",
+        f"",
+        f"🔗 原文：{original_url}",
+        f"",
+        f"{sep}",
+        f"",
+    ]
+    for p in cleaned:
+        body_lines.append(p)
+        body_lines.append("")
 
-📅 {date}
-📄 {title}
+    body_lines.extend([
+        f"{sep}",
+        f"",
+        f"由 Axis Translator 自動發送",
+    ])
 
-🔗 原文：{original_url}
-
----
-{text[:3000]}
----
-
-由 Axis Translator 自動發送
-"""
+    body = "\n".join(body_lines)
 
     msg = MIMEMultipart()
     msg["From"] = GMAIL_USER

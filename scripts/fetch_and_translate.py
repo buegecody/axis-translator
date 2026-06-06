@@ -89,7 +89,7 @@ def translate(text: str) -> str:
 
     translated = []
     for i, chunk in enumerate(chunks):
-        prompt = f"""你是一個專業日文翻譯。請將以下日文完整翻譯成繁體中文，只輸出翻譯結果，不要有任何其他解釋或標記。
+        prompt = f"""你是一個專業日文翻譯。請將以下日文完整翻譯成繁體中文（台灣用語），只輸出翻譯結果，不要有任何其他解釋或標記。禁止輸出簡體中文。
 
 {chunk}"""
         payload = json.dumps({
@@ -97,26 +97,67 @@ def translate(text: str) -> str:
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 2000
         }).encode()
-        # Write payload to temp file to avoid shell escaping issues
         payload_file = "/tmp/trans_payload.json"
         with open(payload_file, "wb") as f:
             f.write(payload)
+
+        result_text = None
+        for attempt in range(3):
+            result = subprocess.run(
+                ["curl", "-s", "-X", "POST",
+                 "https://api.minimaxi.com/v1/chat/completions",
+                 "-H", "Content-Type: application/json",
+                 "-H", f"Authorization: Bearer {MINIMAX_API_KEY}",
+                 "-d", f"@{payload_file}"],
+                capture_output=True, text=True, timeout=60
+            )
+            try:
+                data = json.loads(result.stdout)
+                result_text = data["choices"][0]["message"]["content"].strip()
+                break
+            except Exception as e:
+                print(f"Attempt {attempt+1} failed for chunk {i}: {e}", file=sys.stderr)
+                result_text = None
+
+        if result_text is None:
+            print(f"ERROR: All attempts failed for chunk {i}, skipping", file=sys.stderr)
+            continue
+
+        translated.append(result_text)
+    return "\n\n".join(translated)
+
+
+def translate_title(title: str) -> str:
+    """Translate title to traditional Chinese."""
+    if not title:
+        return title
+    prompt = f"""你是一個專業日文翻譯。請將以下日文標題完整翻譯成繁體中文（台灣用語），只輸出翻譯結果，不要有任何其他解釋或標記。禁止輸出簡體中文。
+
+{title}"""
+    payload = json.dumps({
+        "model": "MiniMax-Text-01",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 200
+    }).encode()
+    payload_file = "/tmp/trans_title_payload.json"
+    with open(payload_file, "wb") as f:
+        f.write(payload)
+
+    for attempt in range(3):
         result = subprocess.run(
             ["curl", "-s", "-X", "POST",
              "https://api.minimaxi.com/v1/chat/completions",
              "-H", "Content-Type: application/json",
              "-H", f"Authorization: Bearer {MINIMAX_API_KEY}",
              "-d", f"@{payload_file}"],
-            capture_output=True, text=True, timeout=60
+            capture_output=True, text=True, timeout=30
         )
         try:
             data = json.loads(result.stdout)
-            result_text = data["choices"][0]["message"]["content"].strip()
-            translated.append(result_text)
+            return data["choices"][0]["message"]["content"].strip()
         except Exception as e:
-            print(f"ERROR translating chunk {i}: {e} | resp: {result.stdout[:200]}", file=sys.stderr)
-            translated.append(f"[翻譯失敗]")
-    return "\n\n".join(translated)
+            print(f"Title translate attempt {attempt+1} failed: {e}", file=sys.stderr)
+    return title  # Fallback to original
 
 
 if __name__ == "__main__":
@@ -128,15 +169,18 @@ if __name__ == "__main__":
     if not original_text:
         print("ERROR: Could not extract article content", file=sys.stderr)
         sys.exit(1)
-    print(f"Title: {title}")
+    print(f"Original title: {title}")
     print(f"Original text length: {len(original_text)} chars")
-    print("Translating...")
+    print("Translating title...")
+    translated_title = translate_title(title)
+    print(f"Translated title: {translated_title}")
+    print("Translating content...")
     translated = translate(original_text)
     print(f"Translated length: {len(translated)} chars")
     # Output JSON for next step
     result = {
         "url": article_url,
-        "title": title,
+        "title": translated_title,
         "original": original_text,
         "translated": translated,
         "fetched_at": datetime.now().isoformat()

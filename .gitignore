@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+*.db
+
+# Jekyll
+_site/
+.sass-cache/
+
+# OS
+.DS_Store

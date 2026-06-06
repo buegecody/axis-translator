@@ -17,8 +17,9 @@ from urllib.parse import urlparse
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path("articles.db")
-PROGRESS_FILE = Path("sitemap_progress.txt")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "articles.db"
+PROGRESS_FILE = BASE_DIR / "sitemap_progress.txt"
 REQUEST_DELAY = 2.5
 MAX_ARTICLES_PER_RUN = 30
 

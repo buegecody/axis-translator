@@ -16,7 +16,7 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path("articles.db")
+DB_PATH = Path(__file__).resolve().parent.parent / "articles.db"
 MINIMAX_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
 API_BASE = "https://api.minimax.chat/v1"
 MODEL = "MiniMax-Text-01"
